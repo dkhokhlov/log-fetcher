@@ -1,5 +1,4 @@
 const fs = require('fs');
-const {logger} = require('./logger')
 
 /**
  * Escapes regex special characters in a string.
@@ -13,23 +12,21 @@ function escapeRegexp(str) {
 }
 
 /**
- * Checks if a directory exists and is readable.
+ * Checks if a directory exists and is readable. Throws if not.
  * @param dir_path
- * @returns {boolean} directory ok/no-ok
+ * @returns {Promise<void>}
  */
 async function checkDirectory(dir_path) {
     try {
         await fs.promises.stat(dir_path, fs.constants.F_OK | fs.constants.R_OK);
-        return true; // the directory is OK
     } catch (error) {
         if (error.code === 'ENOENT') {
-            logger.error(`The directory at ${dir_path} does not exist.`);
+            throw new Error(`The directory at ${dir_path} does not exist.`);
         } else if (error.code === 'EACCES') {
-            logger.error(`The directory at ${dir_path} is not readable.`);
+            throw new Error(`The directory at ${dir_path} is not readable.`);
         } else {
-            logger.error(`Error checking directory at ${dir_path}: ${error.message}`);
+            throw new Error(`Error checking directory at ${dir_path}: ${error.message}`);
         }
-        return false; // the directory is not OK
     }
 }
 

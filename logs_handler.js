@@ -1,7 +1,10 @@
 'use strict'
 
 const fs = require('fs');
-const {logger} = require('./logger')
+const path = require('path');
+
+const {logger: root_logger} = require('./logger')
+const logger = root_logger.child({ id: 'logs_handler' });
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -21,34 +24,12 @@ function sleep(ms) {
 async function logs_handler(log_dir, filename_regexp, num_lines, keyword, async_reply_send) {
 
 
-
-
-
     await async_reply_send("OK @@@@@@@");
 
     throw new Error('This is an error message');
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

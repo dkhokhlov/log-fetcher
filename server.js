@@ -11,15 +11,12 @@ const {configureRoutes} = require('./routes');
 const package_json = require('./package.json');
 logger.info(`log_fetcher v${package_json.version} ${package_json.description}`);
 
-// startup lambda
+// startup async lambda
 const start = async () => {
     try {
         const fastify = require('fastify')({logger})
         // check log dir
-        if (await checkDirectory(process.env.LF_LOG_DIR) === false) {
-            logger.error(`Invalid LF_LOG_DIR: ${process.env.LF_LOG_DIR}`);
-            process.exit(1);
-        }
+        await checkDirectory(process.env.LF_LOG_DIR);
         // configure plugins and routes
         await configureRoutes(fastify, package_json.version);
         // start server

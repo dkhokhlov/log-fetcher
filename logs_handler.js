@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs');
+const {logger} = require('./logger')
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -29,6 +30,28 @@ async function logs_handler(log_dir, filename_regexp, num_lines, keyword, async_
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 module.exports = {
     logs_handler,

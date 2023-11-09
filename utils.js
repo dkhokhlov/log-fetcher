@@ -1,8 +1,5 @@
 const fs = require('fs');
 const {logger} = require('./logger')
-const util = require('util');
-
-const access = util.promisify(fs.access);
 
 /**
  * Escapes regex special characters in a string.
@@ -22,7 +19,7 @@ function escapeRegexp(str) {
  */
 async function checkDirectory(dir_path) {
     try {
-        await access(dir_path, fs.constants.F_OK | fs.constants.R_OK);
+        await fs.promises.stat(dir_path, fs.constants.F_OK | fs.constants.R_OK);
         return true; // the directory is OK
     } catch (error) {
         if (error.code === 'ENOENT') {

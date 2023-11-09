@@ -1,0 +1,18 @@
+{
+  "name": "log_fetcher",
+  "version": "1.0.0",
+  "description": "Web service for reading log files using REST API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Dmitri Khokhlov <dkhokhlov@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/swagger": "^8.12.0",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.24.3",
+    "fastify-metrics": "^10.3.3"
+  }
+}

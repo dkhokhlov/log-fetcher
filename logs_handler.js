@@ -7,18 +7,26 @@ function sleep(ms) {
 }
 
 /**
- * Top level /logs endpoint handler.
+ * Retrieve log lines for given file and pass them to async lambda.
+ * Throws Exceptions on errors.
  *
- * @param logdir
- * @param filename_regex
- * @param num_lines
- * @param keyword
- * @param async_reply_send
+ * @param  {string} log_dir
+ * @param {RegExp} filename_regexp
+ * @param {integer} num_lines
+ * @param {string} keyword
+ * @param {Function} async_reply_send
  * @returns {Promise<void>}
  */
-async function logs_handler(logdir, filename_regex, num_lines, keyword, async_reply_send) {
+async function logs_handler(log_dir, filename_regexp, num_lines, keyword, async_reply_send) {
+
+
+
+
 
     await async_reply_send("OK @@@@@@@");
+
+    throw new Error('This is an error message');
+
 
 }
 

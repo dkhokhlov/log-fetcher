@@ -12,6 +12,23 @@ function escapeRegexp(str) {
 }
 
 /**
+ * Check if encoding type string is valid encoding.
+ * @param {string} encoding
+ * @returns {boolean}
+ */
+function isValidEncoding(encoding) {
+  try {
+    // Buffer.from() accepts encoding as the second parameter.
+    // If the encoding is invalid, an exception will be thrown.
+    Buffer.from('test', encoding);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+
+/**
  * Checks if a directory exists and is readable. Throws if not.
  * @param dir_path
  * @returns {Promise<void>}
@@ -45,6 +62,7 @@ function assert(condition, value, message) {
 
 module.exports = {
     escapeRegexp,
+    isValidEncoding,
     checkDirectory,
     sleep,
     assert

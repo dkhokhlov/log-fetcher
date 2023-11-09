@@ -4,7 +4,7 @@ require('dotenv').config();
 process.env.UV_THREADPOOL_SIZE = process.env.LF_THREADPOOL_SIZE;
 
 const {logger} = require('./logger')
-const {checkDirectory} = require('./utils')
+const {checkDirectory, isValidEncoding} = require('./utils')
 const {configureRoutes} = require('./routes');
 const {assert} = require('./utils')
 
@@ -19,6 +19,7 @@ const start = async () => {
         await checkDirectory(process.env.LF_LOG_DIR);
         const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
         assert(chunk_size > 0, chunk_size, 'Invalid chunk size value');
+        assert(isValidEncoding(process.env.LF_FILE_ENCODING));
         // server instance
         const fastify = require('fastify')({logger})
         // configure plugins and routes

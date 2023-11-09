@@ -60,11 +60,13 @@ async function logs_request_handler(request, reply) {
     reply.type('text/plain'); // just in case, we send log lines as Buffer w/o decoding/encoding
     const log_dir = process.env.LF_LOG_DIR
     const file_name = request.params.filename;
+    const file_path = path.join(log_dir, file_name);
+    const file_encoding = process.env.LF_FILE_ENCODING
     const num_lines = request.params.lines;
     const keyword = request.params.keyword;
     const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
     try {
-        return await logs_handler(log_dir, file_name, chunk_size, num_lines, keyword, (text) => {
+        return await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, (text) => {
             reply.send(text)
         });
     } catch (err) {

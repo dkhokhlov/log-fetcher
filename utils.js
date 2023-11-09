@@ -30,7 +30,22 @@ async function checkDirectory(dir_path) {
     }
 }
 
+async function sleep(ms) {
+    return await new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+function assert(condition, value, message) {
+    if (!condition) {
+        throw new Error(`${message}, received: ${value}`);
+    }
+}
+
+
+
 module.exports = {
     escapeRegexp,
-    checkDirectory
+    checkDirectory,
+    sleep,
+    assert
 };

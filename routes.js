@@ -1,5 +1,4 @@
 const {logs_handler} = require('./logs_handler')
-const {escapeRegexp} = require('./utils')
 
 /**
  * Configure fastify plugins and routes
@@ -41,7 +40,7 @@ async function configureRoutes(fastify, version) {
                     lines: {type: 'integer', description: 'Number of last lines to retrieve (optional)'},
                     keyword: {type: 'string', description: 'Keyword to filter log lines (optional)'},
                 },
-                required: [], // no required
+                required: ['filename']
             },
             response: {
                 200: {
@@ -55,17 +54,14 @@ async function configureRoutes(fastify, version) {
 }
 
 async function logs_request_handler(request, reply) {
-    let filename_regex;
-    if (request.params.filename === undefined) {
-        filename_regex = process.env.LF_INCLUDE_REGEX;
-    } else {
-        filename_regex = '^' + escapeRegexp(request.params.filename) + '$';
-    }
+    reply.type('text/plain'); // just in case, we send log lines as Buffer w/o decoding/encoding
+    const log_dir = process.env.LF_LOG_DIR
+    const file_name = request.params.filename;
     const num_lines = request.params.lines;
     const keyword = request.params.keyword;
-    const log_dir = process.env.LF_LOG_DIR
+    const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
     try {
-        return await logs_handler(log_dir, RegExp(filename_regex), num_lines, keyword, (text) => {
+        return await logs_handler(log_dir, file_name, chunk_size, num_lines, keyword, (text) => {
             reply.send(text)
         });
     } catch (err) {
@@ -77,7 +73,6 @@ async function logs_request_handler(request, reply) {
         }
     }
 }
-
 
 module.exports = {
     configureRoutes

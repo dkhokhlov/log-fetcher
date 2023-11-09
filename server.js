@@ -1,20 +1,17 @@
 'use strict'
 
-const dotenv = require('dotenv');
-dotenv.config();
+require('dotenv').config();
 
-const swagger = require('@fastify/swagger');
 const fastifyMetrics = require('fastify-metrics');
 
+const {logger} = require('./logger')
 const {logs_handler} = require('./logs_handler')
+const {escapeRegexp, checkDirectory} = require('./utils')
 
-const pino = require('pino')
-const pretty = require('pino-pretty')
-const logger = pino(pretty())
 
 var pjson = require('./package.json');
 logger.info(`log_fetcher v${pjson.version} ${pjson.description}`);
-const fastify = require('fastify')({ logger })
+const fastify = require('fastify')({logger})
 
 const configure_server = async () => {
     // '/doc' endpoint
@@ -53,22 +50,35 @@ const configure_server = async () => {
             response: {
                 200: {
                     type: 'string', // response will be a plain text log line
+                    description: 'Log lines: <filename_1>\n<line_1>\n..<line_N>\n\n<file_name2>\n<line_1>..'
                 }
             }
         },
         handler: async (request, reply) => {
-            return await logs_handler(__dirname, (line) => {
-                reply.write(line)
+            let filename_regex;
+            if (request.params.filename === undefined) {
+                filename_regex = process.env.LF_INCLUDE_REGEX;
+            } else {
+                filename_regex = '^' + escape_regexp(request.params.filename) + '$';
+            }
+            const num_lines = request.params.lines;
+            const keyword = request.params.keyword;
+            const logdir = process.env.LF_LOG_DIR
+            return await logs_handler(logdir, RegExp(filename_regex), num_lines, keyword, (text) => {
+                reply.send(text)
             });
         }
     });
-
     await fastify.ready();
     fastify.swagger();
+    // check log dir
+    if (await checkDirectory(process.env.LF_LOG_DIR) === false) {
+        process.exit(2);
+    }
 };
-configure_server().catch(error => {
-        logger.error(err);
-        process.exit(1);
+configure_server().catch(err => {
+    logger.error(err);
+    process.exit(1);
 });
 
 // start the server
@@ -80,10 +90,10 @@ const start = async () => {
         logger.info(`Metrics: http://${fastify.server.address().address}:${fastify.server.address().port}/metrics`);
     } catch (err) {
         logger.error(err);
-        process.exit(2);
+        process.exit(3);
     }
 };
 start().catch(error => {
-        logger.error(err);
-        process.exit(3);
+    logger.error(err);
+    process.exit(4);
 });

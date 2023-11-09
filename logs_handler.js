@@ -10,7 +10,9 @@ const logger = root_logger.child({id: 'logs_handler'});
 
 /**
  * Retrieve log lines for given file and pass them to async lambda. Order of outputted log lines: latest log lines
- * listed first. Keyword is defined filter matching lines. Lines are sent as Buffer w/o decoding/encoding.
+ * listed first. If keyword is defined then only matching lines are returned. Lines are sent as-is w/o decoding/encoding.
+ * Note: the client is responsible for correct handling of premature end of chunk stream to detect error condition when
+ * server side error happened after sending of lines started.
  * Throws Exceptions on errors.
  *
  * @param {string} log_dir - log dir

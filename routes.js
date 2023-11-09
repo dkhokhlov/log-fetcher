@@ -32,7 +32,10 @@ async function configureRoutes(fastify, version) {
         method: 'GET',
         url: '/logs',
         schema: {
-                description: 'Retrieves log lines. Note: the client shall handle premature chunk stream end in response body triggered by server side error condition after chunk stream started.',
+                description: 'Retrieves log lines. Order of outputted log lines: latest log lines listed first. ' +
+                    'If keyword is defined then only matching lines are returned. Lines are sent as-is w/o decoding/encoding. ' +
+                    ' Note: the client is responsible for correct handling of premature end of chunk stream to detect error condition' +
+                    ' when server side error happened after sending of lines started.',
                 querystring: {
                 type: 'object',
                 properties: { // optional

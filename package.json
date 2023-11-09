@@ -1,5 +1,5 @@
 {
-  "name": "log_fetcher",
+  "name": "log-fetcher",
   "version": "1.0.0",
   "description": "Web service for reading log files using REST API",
   "main": "index.js",
@@ -13,6 +13,8 @@
     "@fastify/swagger": "^8.12.0",
     "dotenv": "^16.3.1",
     "fastify": "^4.24.3",
-    "fastify-metrics": "^10.3.3"
+    "fastify-metrics": "^10.3.3",
+    "pino": "^8.16.1",
+    "pino-pretty": "^10.2.3"
   }
 }

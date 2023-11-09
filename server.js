@@ -1,73 +1,78 @@
 'use strict'
 
 const dotenv = require('dotenv');
-const result = dotenv.config();
+dotenv.config();
 
-var pjson = require('./package.json');
-console.log(`log_fetcher v${pjson.version} ${pjson.description}`);
-
-const fastify = require('fastify')
 const swagger = require('@fastify/swagger');
 const fastifyMetrics = require('fastify-metrics');
 
-const server = fastify({ logger: true, redact: ["headers.authorization"]});
+const log_request_handler = require('./log_request_handler')
+
+const pino = require('pino')
+const pretty = require('pino-pretty')
+const logger = pino(pretty())
+
+var pjson = require('./package.json');
+logger.info(`log_fetcher v${pjson.version} ${pjson.description}`);
+
+const server = require('fastify')({
+    logger
+})
 
 // '/doc' endpoint
 server.register(swagger, {
-  exposeRoute: true,
-  routePrefix: '/doc',
-  swagger: {
-    info: {
-      title: 'Log Fetcher API',
-      description: 'Testing Log Fetcher API',
-      version: pjson.version
+    exposeRoute: true,
+    routePrefix: '/doc',
+    swagger: {
+        info: {
+            title: 'Log Fetcher API',
+            description: 'Testing Log Fetcher API',
+            version: pjson.version
+        }
     }
-  }
 });
 
 // '/metrics' endpoint
 server.register(fastifyMetrics, {
-  endpoint: '/metrics'
+    endpoint: '/metrics'
 });
-
 
 // add main route
 server.route({
-  method: 'GET',
-  url: '/logs',
-  schema: {
-    querystring: {
-      type: 'object',
-      properties: {
-        level: { type: 'string' }, // Optional parameter
-        date: { type: 'string', format: 'date' } // Optional parameter with date format
-      },
-      required: [], // No query params are required, they are all optional
+    method: 'GET',
+    url: '/logs',
+    schema: {
+        querystring: {
+            type: 'object',
+            properties: { // optional
+                filename: {type: 'string', description: 'Name of the log file (optional)'},
+                lines: {type: 'integer', description: 'Number of last lines to retrieve (optional)'},
+                keyword: {type: 'string', description: 'Keyword to filter log lines (optional)'},
+            },
+            required: [], // No query params are required, they are all optional
+        },
+        response: {
+            200: {
+                type: 'string', // response will be a plain text log line
+            }
+        }
     },
-    response: {
-      200: {
-        type: 'string', // response will be a plain text log line
-      }
+    handler: async (request, reply) => {
+        return await log_request_handler(__dirname, (line) => {
+            reply.write(line)
+        });
     }
-  },
-  handler: async (request, reply) => {
-    const { level, date } = request.query;
-    let logLine = 'INFO: A log line from the Fastify server.';
-    reply.type('text/plain');
-    return logLine;
-  }
 });
-
 
 // start the server
 const start = async () => {
-  try {
-    await fastify.listen({ port: process.env.LF_PORT });
-    fastify.log.info(`server listening on ${fastify.server.address().port}`);
-    fastify.log.info(`documentation at ${fastify.server.address().port}/doc`);
-  } catch (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
+    try {
+        await server.listen({port: process.env.LF_PORT});
+        server.log.info(`Documentation: http://${server.server.address().address}:${server.server.address().port}/doc`);
+        server.log.info(`Metrics: http://${server.server.address().address}:${server.server.address().port}/metrics`);
+    } catch (err) {
+        server.log.error(err);
+        process.exit(1);
+    }
 };
-start();
+start().then();

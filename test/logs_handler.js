@@ -1,3 +1,4 @@
+'use strict'
 const tap = require('tap');
 const mock_fs = require('mock-fs');
 const {logs_handler} = require('../logs_handler');

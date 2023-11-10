@@ -4,7 +4,8 @@
   "description": "Web service for reading log files using REST API",
   "main": "index.js",
   "scripts": {
-    "test": "tap"
+    "test": "tap",
+    "lint": "eslint ./"
   },
   "keywords": [],
   "author": "Dmitri Khokhlov <dkhokhlov@gmail.com>",
@@ -19,6 +20,7 @@
     "pino-pretty": "^10.2.3"
   },
   "devDependencies": {
+    "eslint": "^8.53.0",
     "mock-fs": "^5.2.0",
     "tap": "^18.5.7"
   }

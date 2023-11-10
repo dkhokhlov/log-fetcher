@@ -1,4 +1,6 @@
+'use strict'
 const {logs_handler} = require('./logs_handler')
+const path = require('path');
 
 /**
  * Configure fastify plugins and routes

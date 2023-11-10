@@ -37,7 +37,7 @@ const start = async () => {
     }
 };
 // run server
-start().catch(error => {
+start().catch(err => {
     logger.error(err);
     process.exit(3);
 });

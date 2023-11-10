@@ -1,32 +1,23 @@
 const fs = require('fs');
 
 /**
- * Escapes regex special characters in a string.
- * @param {string} str - The input string.
- * @return {string} The escaped RegExp object.
- */
-function escapeRegexp(str) {
-    // Escaping special characters using replace function
-    const escaped = str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return escaped;
-}
-
-/**
  * Check if encoding type string is valid encoding.
  * @param {string} encoding
  * @returns {boolean}
  */
 function isValidEncoding(encoding) {
-  try {
-    // Buffer.from() accepts encoding as the second parameter.
-    // If the encoding is invalid, an exception will be thrown.
-    Buffer.from('test', encoding);
-    return true;
-  } catch (e) {
-    return false;
-  }
+    if (typeof encoding !== 'string') {
+        return false; // Early return for non-string types
+    }
+    try {
+        // Buffer.from() accepts encoding as the second parameter.
+        // If the encoding is invalid, an exception will be thrown.
+        Buffer.from('test', encoding);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
-
 
 /**
  * Checks if a directory exists and is readable. Throws if not.
@@ -35,7 +26,7 @@ function isValidEncoding(encoding) {
  */
 async function checkDirectory(dir_path) {
     try {
-        await fs.promises.stat(dir_path, fs.constants.F_OK | fs.constants.R_OK);
+        await fs.promises.access(dir_path, fs.constants.F_OK | fs.constants.R_OK);
     } catch (error) {
         if (error.code === 'ENOENT') {
             throw new Error(`The directory at ${dir_path} does not exist.`);
@@ -47,23 +38,36 @@ async function checkDirectory(dir_path) {
     }
 }
 
-async function sleep(ms) {
-    return await new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
 function assert(condition, value, message) {
     if (!condition) {
         throw new Error(`${message}, received: ${value}`);
     }
 }
 
+/**
+ * Escapes regex special characters in a string.
+ * @param {string} str - The input string.
+ * @return {string} The escaped RegExp object.
+ */
+// function escapeRegexp(str) {
+//     // Escaping special characters using replace function
+//     const escaped = str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+//     return escaped;
+// }
 
+/**
+ * async sleep
+ * @param ms
+ * @returns {Promise<unknown>}
+ */
+// async function sleep(ms) {
+//     return await new Promise(resolve => setTimeout(resolve, ms));
+// }
 
 module.exports = {
-    escapeRegexp,
     isValidEncoding,
     checkDirectory,
-    sleep,
-    assert
+    assert,
+//    sleep,
+//    escapeRegexp
 };

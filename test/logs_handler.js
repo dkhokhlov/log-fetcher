@@ -100,16 +100,63 @@ tap.test('Testing num_lines parameter', async (t) => {
   await logs_handler(
     testFilePath,
     'utf-8',
-    1024, // Assuming a chunk size of 1024 for the test
-    20,
+    2024, // Assuming a chunk size of 1024 for the test
+    100,
     null, // No keyword filtering for this test
     async (line) => {
       linesReceived++;
       t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
     }
   );
-  t.equal(linesReceived, 20, 'Received the correct number of lines (20)');
+  t.equal(linesReceived, 100,'Received the correct number of lines (100)');
 
+  t.end();
+});
+
+// Clean up the .tap directory and test files after all tests
+tap.teardown(async () => {
+  await fs.promises.rm(tapDirPath, { recursive: true, force: true });
+});
+
+
+const keyword = 'special_keyword';
+const linesWithKeyword = 25; // Assuming we have 25 lines with the keyword
+
+// Ensure the .tap directory exists
+tap.beforeEach(async () => {
+  await fs.promises.mkdir(tapDirPath, { recursive: true });
+});
+
+// Test log file creation with a keyword
+tap.test('Creating a test log file with keyword', async (t) => {
+  let testData = '';
+  for (let i = 0; i < totalLines; i++) {
+    if (i < linesWithKeyword) {
+      testData += `Test log line with ${keyword} ${i}\n`;
+    } else {
+      testData += `Test log line ${i}\n`;
+    }
+  }
+  await fs.promises.writeFile(testFilePath, testData);
+  t.pass('Test log file with keyword created');
+  t.end();
+});
+
+// Test for `keyword` functionality
+tap.test('Testing keyword parameter', async (t) => {
+  let linesReceived = 0;
+  await logs_handler(
+    testFilePath,
+    'utf-8',
+    1024, // Assuming a chunk size of 1024 for the test
+    undefined, // No limit on the number of lines
+    keyword, // Filter lines containing the keyword
+    async (line) => {
+      linesReceived++;
+      t.match(line.toString('utf-8'), new RegExp(keyword), 'Line contains the keyword');
+    }
+  );
+  t.equal(linesReceived, linesWithKeyword, `Received the correct number of lines with the keyword (${linesWithKeyword})`);
   t.end();
 });
 

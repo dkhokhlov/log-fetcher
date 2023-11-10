@@ -45,6 +45,24 @@ function assert(condition, value, message) {
 }
 
 /**
+ * Find all positions of byte in buffer. Return found positions as array.
+ * @param buffer
+ * @param byte_value
+ * @returns {*[]}
+ */
+function findAllBytePositions(buffer, byte_value) {
+  const positions = [];
+  let pos = buffer.indexOf(byte_value);
+  while (pos !== -1) {
+    positions.push(pos);
+    pos = buffer.indexOf(byte_value, pos + 1);
+  }
+  return positions;
+}
+
+
+
+/**
  * Escapes regex special characters in a string.
  * @param {string} str - The input string.
  * @return {string} The escaped RegExp object.
@@ -68,6 +86,7 @@ module.exports = {
     isValidEncoding,
     checkDirectory,
     assert,
+    findAllBytePositions,
 //    sleep,
 //    escapeRegexp
 };

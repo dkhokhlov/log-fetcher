@@ -60,7 +60,7 @@ async function logs_handler(file_path, file_encoding, chunk_size, num_lines, key
             buffer = new_line_positions.length > 0 ? buffer.slice(new_line_positions[0] + 1) : Buffer.alloc(0);
         }
     } catch (error) {
-        logger.error(`An error occurred while reading the file: ${error.message}`);
+        logger.error(`An error occurred while reading the file ${file_path}: ${error.message}`);
         throw error;
     } finally {
         await fd.close();

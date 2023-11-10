@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {assert} = require('./utils')
+const {assert, findAllBytePositions} = require('./utils')
 
 const {logger: root_logger} = require('./logger')
 const logger = root_logger.child({id: 'logs_handler'});
@@ -38,23 +38,26 @@ async function logs_handler(file_path, file_encoding, chunk_size, num_lines, key
             const read_chunk_size = Math.min(chunk_size, position);
             const chunk_buffer = Buffer.alloc(read_chunk_size);
             position -= read_chunk_size;
-            // Use fs.promises.read with the FileHandle object
-            const {bytesRead} = await fd.read(chunk_buffer, 0, read_chunk_size, position);
+            const { bytesRead } = await fd.read(chunk_buffer, 0, read_chunk_size, position);
             buffer = Buffer.concat([chunk_buffer.slice(0, bytesRead), buffer]);
-            // search for line ends
-            let new_line_index = buffer.indexOf(NEWLINE); // Search for newline
-            while (new_line_index !== -1) {
-                const line = buffer.slice(0, new_line_index);
-                buffer = buffer.slice(new_line_index + 1); // +1 to remove the newline character
+
+            const new_line_positions = findAllBytePositions(buffer, NEWLINE);
+
+            for (let i = new_line_positions.length - 1; i >= 0; i--) {
+                const end = new_line_positions[i];
+                let start = i > 0 ? new_line_positions[i - 1] + 1 : 0;
+                let line = buffer.slice(start, end + 1); // +1 to include the newline character
+
                 if (!keyword || line.toString(file_encoding).includes(keyword)) {
-                    await async_output(line); // output the line as Buffer
+                    await async_output(line);
                     line_count++;
                     if (num_lines !== undefined && line_count >= num_lines) {
                         break;
                     }
                 }
-                new_line_index = buffer.indexOf(NEWLINE); // Search for the next newline
             }
+
+            buffer = new_line_positions.length > 0 ? buffer.slice(new_line_positions[0] + 1) : Buffer.alloc(0);
         }
     } catch (error) {
         logger.error(`An error occurred while reading the file: ${error.message}`);

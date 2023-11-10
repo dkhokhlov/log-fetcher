@@ -60,8 +60,6 @@ function findAllBytePositions(buffer, byte_value) {
   return positions;
 }
 
-
-
 /**
  * Escapes regex special characters in a string.
  * @param {string} str - The input string.

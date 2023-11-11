@@ -44,6 +44,7 @@ function assert(condition, value, message) {
     }
 }
 
+const NEWLINE = 10; // ASCII code for '\n'
 /**
  * Find all lines in Buffer. Backward means buffers are read from file in backward direction - next buffer
  * will be on left side.
@@ -56,11 +57,10 @@ function assert(condition, value, message) {
  */
 function backwardLineSegmentation(buffer, partial_right) {
     const positions = []; // eol
-    let eol = 10;
-    let pos = buffer.indexOf(eol);
+    let pos = buffer.indexOf(NEWLINE);
     while (pos !== -1) {
         positions.push(pos);
-        pos = buffer.indexOf(eol, pos + 1);
+        pos = buffer.indexOf(NEWLINE, pos + 1);
     }
     let left;
     if (positions.length === 0) {
@@ -109,7 +109,8 @@ module.exports = {
     isValidEncoding,
     checkDirectory,
     assert,
-    findAllBytePositions,
+    NEWLINE,
+    backwardLineSegmentation,
 //    sleep,
 //    escapeRegexp
 };

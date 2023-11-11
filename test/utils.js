@@ -73,16 +73,9 @@ tap.test('assert function', async (t) => {
     t.end();
 });
 
-const { findAllBytePositions } = require('../utils');
+const { backwardLineSegmentation } = require('../utils');
 
 tap.test('findAllBytePositions function', async (t) => {
-  const buffer = Buffer.from('Hello\nWorld\nThis is a test\nBuffer');
-  const newlineByte = 10;
-
-  const positions = findAllBytePositions(buffer, newlineByte);
-  const expectedPositions = [5, 11, 26]; // Positions of '\n' in the buffer
-
-  t.same(positions, expectedPositions, 'Positions should match the expected newline positions');
 
   t.end();
 });

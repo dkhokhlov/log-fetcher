@@ -45,19 +45,44 @@ function assert(condition, value, message) {
 }
 
 /**
- * Find all positions of byte in buffer. Return found positions as array.
- * @param buffer
- * @param byte_value
- * @returns {*[]}
+ * Find all lines in Buffer. Backward means buffers are read from file in backward direction - next buffer
+ * will be on left side.
+ * Using eol = 10 (\n), included with each line
+ * @param buffer - current input buffer
+ * @param partial_right - partial line from previous buffer on the right side of the input buffer
+ * @returns {Array<Array>} - array with 2 elements:
+ *   - partial line on the left side of the buffer (slice)
+ *   - array of complete lines (slices)
  */
-function findAllBytePositions(buffer, byte_value) {
-  const positions = [];
-  let pos = buffer.indexOf(byte_value);
-  while (pos !== -1) {
-    positions.push(pos);
-    pos = buffer.indexOf(byte_value, pos + 1);
-  }
-  return positions;
+function backwardLineSegmentation(buffer, partial_right) {
+    const positions = []; // eol
+    let eol = 10;
+    let pos = buffer.indexOf(eol);
+    while (pos !== -1) {
+        positions.push(pos);
+        pos = buffer.indexOf(eol, pos + 1);
+    }
+    let left;
+    if (positions.length === 0) {
+        left = buffer.join(right);
+        return [left, []]; // one incomplete line on the left side of the buffer, will be partial_right for next buffer
+    }
+    let lines = [];
+    let last_pos = positions.pop(); // last
+    if (last_pos === buffer.size - 1)
+        lines.push(right); // right becomes complete line
+    if (positions.length === 0) {
+        left = buffer.slice(0, last_pos + 1);
+        return [left, []]; // one incomplete line on the left side of the buffer, will be partial_right for next buffer
+    }
+    while (positions.length - 1 > 0) {
+        pos = positions.pop();
+        line = buffer.slice(pos + 1, last_pos + 1);
+        lines.push(line); // needs to be reversed at the end
+        last_pos = pos;
+    }
+    left = buffer.slice(0, positions[0])
+    return [left, lines.reverse()];  // lines order as in input buffer
 }
 
 /**

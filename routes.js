@@ -132,7 +132,7 @@ async function multi_server_logs_request_handler(request, reply) {
     try {
         await Promise.all(urls.map(url => processUrl(url)));
     } catch (error) {
-        fastify.log.error(error);
+        request.log.error(error);
         reply.code(500).send('An error occurred while processing the URLs');
     } finally {
         reply.raw.end();

@@ -48,6 +48,7 @@ const NEWLINE = 10; // ASCII code for '\n'
 /**
  * Find all lines in Buffer. Backward means buffers are read from file in backward direction - next buffer
  * will be on left side. Each line ends with LF = 10 (\n). Lines are returned in order as they appear in the buffer.
+ * File example: File(|--bufferN--|--buffer...--|--buffer2--|--buffer1--|)
  * @param buffer - current input buffer
  * @param partial_right - partial line from previous buffer on the right side of the input buffer
  * @returns {Array<Array>} - array with 2 elements:
@@ -63,19 +64,20 @@ function backwardLineSegmentation(buffer, partial_right) {
     }
     let left;
     if (positions.length === 0) {
-        left = buffer.join(right);
-        return [left, []]; // one incomplete line on the left side of the buffer, will be partial_right for next buffer
+        left = Buffer.concat(buffer, partial_right);
+        return [left, []]; // incomplete line on the left side of the buffer, will be partial_right for next buffer
     }
     let lines = [];
     let last_pos = positions.pop(); // last
     if (last_pos === buffer.size - 1)
-        lines.push(right); // right becomes complete line
+        lines.push(partial_right); // right becomes complete line
     if (positions.length === 0) {
         left = buffer.slice(0, last_pos + 1);
-        return [left, []]; // one incomplete line on the left side of the buffer, will be partial_right for next buffer
+        return [left, []]; // incomplete line on the left side of the buffer, will be partial_right for next buffer
     }
+    let line;
     while (positions.length - 1 > 0) {
-        pos = positions.pop();
+        pos = positions.pop(); // position on the right
         line = buffer.slice(pos + 1, last_pos + 1);
         lines.push(line); // needs to be reversed at the end
         last_pos = pos;

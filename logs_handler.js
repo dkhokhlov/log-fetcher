@@ -5,7 +5,6 @@ const {assert, backwardLineSegmentation} = require('./utils')
 const {logger: root_logger} = require('./logger')
 const logger = root_logger.child({id: 'logs_handler'});
 
-
 /**
  * Retrieve log lines from given file and pass them to async lambda. Order of outputted log lines - latest log lines
  * first. If keyword is defined then only lines that have that keyword are returned. Lines are sent w/o decoding/encoding.
@@ -32,18 +31,18 @@ async function logs_handler(file_path, file_encoding, chunk_size,
     let lines;
     const is_ascii_utf8 = ['ascii', 'utf8'].includes(file_encoding.toLowerCase());
     try {
-        let partial_line = Buffer.alloc(0);  // empty buffer (w/o eol) means next buffer partial slice on the right will be ignored
+        const chunk_buffer = Buffer.alloc(chunk_size);
+        let partial_line = Buffer.alloc(0);  // empty buffer w/o LF - meaning partial line on the right in next buffer will be ignored
         while (position > 0 && (num_lines === undefined || line_count < num_lines)) {
             const read_chunk_size = Math.min(chunk_size, position);
-            let chunk_buffer = Buffer.alloc(read_chunk_size);
             position -= read_chunk_size;
             const {bytesRead} = await fd.read(chunk_buffer, 0, read_chunk_size, position);
-            // transcode utf16 if needed
-            if (!is_ascii_utf8) {
-                const utf16leString = chunk_buffer.toString(file_encoding);
-                chunk_buffer = Buffer.from(utf16leString, 'utf8');
+            let buffer = chunk_buffer.slice(0, bytesRead);
+            if (!is_ascii_utf8) { // transcode utf16le to utf8
+                const utf16leString = buffer.toString(file_encoding);
+                buffer = Buffer.from(utf16leString, 'utf8');
             }
-            [partial_line, lines] = backwardLineSegmentation(chunk_buffer, partial_line);
+            [partial_line, lines] = backwardLineSegmentation(buffer, partial_line);
             for (const line in lines.reverse()) {
                 if (!keyword || line.toString(file_encoding).includes(keyword)) {
                     await async_output(line);

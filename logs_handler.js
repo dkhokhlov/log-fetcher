@@ -29,17 +29,22 @@ async function logs_handler(file_path, file_encoding, chunk_size,
     const fd = await fs.promises.open(file_path, 'r');
     let position = file_stat.size;
     let line_count = 0;
+    let lines;
+    const is_ascii_utf8 = ['ascii', 'utf8'].includes(file_encoding.toLowerCase());
     try {
         let partial_line = Buffer.alloc(0);  // empty buffer (w/o eol) means next buffer partial slice on the right will be ignored
         while (position > 0 && (num_lines === undefined || line_count < num_lines)) {
             const read_chunk_size = Math.min(chunk_size, position);
-            const chunk_buffer = Buffer.alloc(read_chunk_size);
+            let chunk_buffer = Buffer.alloc(read_chunk_size);
             position -= read_chunk_size;
             const {bytesRead} = await fd.read(chunk_buffer, 0, read_chunk_size, position);
-            let lines;
+            // transcode utf16 if needed
+            if (!is_ascii_utf8) {
+                const utf16leString = chunk_buffer.toString(file_encoding);
+                chunk_buffer = Buffer.from(utf16leString, 'utf8');
+            }
             [partial_line, lines] = backwardLineSegmentation(chunk_buffer, partial_line);
-            for (let i = lines.length - 1; i >= 0; i--) {
-                const line = lines[i];
+            for (const line in lines.reverse()) {
                 if (!keyword || line.toString(file_encoding).includes(keyword)) {
                     await async_output(line);
                     line_count++;

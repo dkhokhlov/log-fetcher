@@ -47,8 +47,7 @@ function assert(condition, value, message) {
 const NEWLINE = 10; // ASCII code for '\n'
 /**
  * Find all lines in Buffer. Backward means buffers are read from file in backward direction - next buffer
- * will be on left side.
- * Using eol = 10 (\n), included with each line
+ * will be on left side. Each line ends with LF = 10 (\n). Lines are returned in order as they appear in the buffer.
  * @param buffer - current input buffer
  * @param partial_right - partial line from previous buffer on the right side of the input buffer
  * @returns {Array<Array>} - array with 2 elements:

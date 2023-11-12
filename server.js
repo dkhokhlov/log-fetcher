@@ -18,8 +18,10 @@ const start = async () => {
         // validate config
         await checkDirectory(process.env.LF_LOG_DIR);
         const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
-        assert(chunk_size > 0, chunk_size, 'Invalid chunk size value');
-        assert(isValidEncoding(process.env.LF_FILE_ENCODING));
+        assert(chunk_size > 0 && chunk_size % 4 === 0, chunk_size, 'Chunk size number must be positive and divisible by 4');
+        let file_encoding = process.env.LF_FILE_ENCODING;
+        assert(isValidEncoding(file_encoding), file_encoding, 'LF_FILE_ENCODING must have valid text encoding');
+        assert(['ascii', 'utf8', 'utf16le'].includes(file_encoding.toLowerCase()), file_encoding, 'Only file encodings ascii, utf8 and utf16le are supported');
         // server instance
         const fastify = require('fastify')({logger})
         // configure plugins and routes

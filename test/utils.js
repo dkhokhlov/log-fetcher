@@ -51,7 +51,7 @@ tap.test('Directory Checks', async (t) => {
     t.end();
 });
 
-const { assert } = require('../utils');
+const {assert} = require('../utils');
 
 tap.test('assert function', async (t) => {
     t.test('should not throw an error for a true condition', (t) => {
@@ -71,7 +71,7 @@ tap.test('assert function', async (t) => {
     t.end();
 });
 
-const { backwardLineSegmentation } = require('../utils');
+const {backwardLineSegmentation} = require('../utils');
 
 tap.test('backwardLineSegmentation function', async (t) => {
     // Test with a simple case
@@ -101,8 +101,17 @@ tap.test('backwardLineSegmentation function', async (t) => {
         t.same(result, expected, 'Partial line on right is handled correctly');
     });
 
-    // More tests can be added here to cover other cases
-
     t.end();
 });
 
+const {SeedableRandom} = require('../utils');
+
+tap.test('SeedableRandom output should be in the range [0, 1)', (t) => {
+    let seed = 12345;
+    const rng = new SeedableRandom(seed);
+    for (let i = 0; i < 100; i++) {
+        const value = rng.random();
+        t.ok(value >= 0 && value < 1, 'Generated value should be within [0, 1)');
+    }
+    t.end();
+});

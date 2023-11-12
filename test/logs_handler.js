@@ -67,14 +67,15 @@ tap.test('Creating a test log file', async (t) => {
 });
 
 // Test for `num_lines` functionality
-tap.test('Testing num_lines parameter', async (t) => {
+tap.test('Testing combinations of num_lines and chunk_size parameters', async (t) => {
     // Test retrieving a specific number of lines
     let linesReceived = 0;
     let num_lines = 0;
+    let chunk_size = 1024;
     await logs_handler(
         testFilePath,
         'utf-8',
-        1024, // Assuming a chunk size of 1024 for the test
+        chunk_size,
         num_lines,
         null, // No keyword filtering for this test
         async (line) => {
@@ -86,10 +87,11 @@ tap.test('Testing num_lines parameter', async (t) => {
 
     linesReceived = 0;
     num_lines = 1;
+    chunk_size = 1024;
     await logs_handler(
         testFilePath,
         'utf-8',
-        1024, // Assuming a chunk size of 1024 for the test
+        chunk_size,
         num_lines,
         null, // No keyword filtering for this test
         async (line) => {
@@ -101,10 +103,11 @@ tap.test('Testing num_lines parameter', async (t) => {
 
     linesReceived = 0;
     num_lines = 10;
+    chunk_size = 8;
     await logs_handler(
         testFilePath,
         'utf-8',
-        10, // Assuming a chunk size of 1024 for the test
+        chunk_size,
         num_lines,
         null, // No keyword filtering for this test
         async (line) => {
@@ -114,35 +117,34 @@ tap.test('Testing num_lines parameter', async (t) => {
     );
     t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
 
-    linesReceived = 0;
-    num_lines = 101;
-    await logs_handler(
-        testFilePath,
-        'utf-8',
-        1024, // Assuming a chunk size of 1024 for the test
-        num_lines,
-        null, // No keyword filtering for this test
-        async (line) => {
-            linesReceived++;
-            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
-        }
-    );
-    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
-
-    linesReceived = 0;
-    num_lines = 1001;
-    await logs_handler(
-        testFilePath,
-        'utf-8',
-        1024, // Assuming a chunk size of 1024 for the test
-        num_lines,
-        null, // No keyword filtering for this test
-        async (line) => {
-            linesReceived++;
-            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
-        }
-    );
-    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
+    // Test randomized chunk_size & num_lines
+    const {SeedableRandom} = require('../utils');
+    let v_chunk_size = [];
+    let v_num_lines = [];
+    let N = 20;
+    let seed = 12345; // Example seed
+    let rng = new SeedableRandom(seed);
+    for (let i = 0; i < N; i++) {
+        v_chunk_size.push(4 * Math.floor(rng.random() * (64000 - 4 + 1)) + 4); // must be multiple of 4
+        v_num_lines.push(Math.floor(rng.random() * (totalLines - 0 + 1)) + 0);
+    }
+    for (let i = 0; i < N; i++) {
+        linesReceived = 0;
+        chunk_size = v_chunk_size[i];
+        num_lines = v_num_lines[i];
+        await logs_handler(
+            testFilePath,
+            'utf-8',
+            chunk_size,
+            num_lines,
+            null, // No keyword filtering for this test
+            async (line) => {
+                linesReceived++;
+                t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+            }
+        );
+        t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines}) using chunk_size (${chunk_size})`);
+    }
 
     t.end();
 });

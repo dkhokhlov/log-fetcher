@@ -20,6 +20,8 @@ const logger = root_logger.child({id: 'logs_handler'});
  */
 async function logs_handler(file_path, file_encoding, chunk_size,
                             num_lines, keyword, async_output) {
+    assert(chunk_size % 4 === 0, chunk_size, 'chunk_size must be an integer divisible by 4');
+
     const file_stat = await fs.promises.stat(file_path);
     assert(file_stat.isFile(), `The path must be a file: ${file_path}`);
 

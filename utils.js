@@ -45,6 +45,22 @@ function assert(condition, value, message) {
     }
 }
 
+class SeedableRandom {
+    constructor(seed) {
+        this.seed = seed;
+    }
+
+    random() {
+        // simple LCG
+        const a = 1664525;
+        const c = 1013904223;
+        const m = 2 ** 32;
+        // update the seed and return a pseudo-random number
+        this.seed = (a * this.seed + c) % m;
+        return this.seed / m;
+    }
+}
+
 const NEWLINE = 10; // ASCII code for '\n'
 /**
  * Find all lines in Buffer. Backward means buffers are read from file in backward direction - next buffer
@@ -115,6 +131,7 @@ module.exports = {
     assert,
     NEWLINE,
     backwardLineSegmentation,
+    SeedableRandom,
 //    sleep,
 //    escapeRegexp
 };

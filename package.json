@@ -4,7 +4,7 @@
   "description": "Web service for reading log files using REST API",
   "main": "index.js",
   "scripts": {
-    "test": "tap",
+    "test": "tap --timeout 120",
     "lint": "eslint ./"
   },
   "keywords": [],

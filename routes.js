@@ -35,13 +35,13 @@ async function configureRoutes(fastify, version) {
         url: '/logs',
         schema: {
                 description: 'Retrieves log lines. Order of outputted log lines: latest log lines listed first. ' +
-                    'If keyword is defined then only matching lines are returned. Lines are sent as-is w/o decoding/encoding. ' +
-                    ' Note: the client is responsible for correct handling of premature end of chunk stream to detect error condition' +
-                    ' when server side error happened after sending of lines started.',
+                    'If keyword is defined then only matching lines are returned. Lines are sent in utf8 encoding. ' +
+                    'Note: the client is responsible for correct handling of premature end of chunk stream to detect ' +
+                    'server side error condition after the sending of lines is started.',
                 querystring: {
                 type: 'object',
-                properties: { // optional
-                    filename: {type: 'string', description: 'Name of the log file (optional)'},
+                properties: {
+                    filename: {type: 'string', description: 'Name of the log file'},
                     lines: {type: 'integer', description: 'Number of last lines to retrieve (optional)'},
                     keyword: {type: 'string', description: 'Keyword to filter log lines (optional)'},
                 },

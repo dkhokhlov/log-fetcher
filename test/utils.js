@@ -11,11 +11,9 @@ tap.test('Encoding Validation', async (t) => {
     t.ok(isValidEncoding('UTF8'), 'UTF8 should be case insensitive and valid');
     t.ok(isValidEncoding('Ascii'), 'Ascii should be case insensitive and valid');
     t.ok(isValidEncoding(''), 'empty string should be a valid encoding, defaults to utf8');
-
     t.notOk(isValidEncoding('fakeEncoding'), 'fakeEncoding should not be a valid encoding');
     t.notOk(isValidEncoding(null), 'null should not be a valid encoding');
     t.notOk(isValidEncoding(undefined), 'undefined should not be a valid encoding');
-
     t.end();
 });
 
@@ -75,9 +73,36 @@ tap.test('assert function', async (t) => {
 
 const { backwardLineSegmentation } = require('../utils');
 
-tap.test('findAllBytePositions function', async (t) => {
+tap.test('backwardLineSegmentation function', async (t) => {
+    // Test with a simple case
+    t.test('should handle a single complete line', async (t) => {
+        const buffer = Buffer.from("Hello\n");
+        const partial_right = Buffer.alloc(0);
+        const expected = [Buffer.from("Hello\n"), []];
+        const result = backwardLineSegmentation(buffer, partial_right);
+        t.same(result, expected, 'Single complete line is handled correctly');
+    });
 
-  t.end();
+    // Test with multiple lines
+    t.test('should handle multiple lines', async (t) => {
+        const buffer = Buffer.from("Line1\nLine2\nLine3\n");
+        const partial_right = Buffer.alloc(0);
+        const expected = [Buffer.from("Line1\n"), [Buffer.from("Line2\n"), Buffer.from("Line3\n")]];
+        const result = backwardLineSegmentation(buffer, partial_right);
+        t.same(result, expected, 'Multiple lines are handled correctly');
+    });
+
+    // Test with partial line on right
+    t.test('should handle partial line on right', async (t) => {
+        const buffer = Buffer.from("Line1\nLine2\n");
+        const partial_right = Buffer.from("Line3\n");
+        const expected = [Buffer.from("Line1\n"), [Buffer.from("Line2\n"), Buffer.from("Line3\n")]];
+        const result = backwardLineSegmentation(buffer, partial_right);
+        t.same(result, expected, 'Partial line on right is handled correctly');
+    });
+
+    // More tests can be added here to cover other cases
+
+    t.end();
 });
-
 

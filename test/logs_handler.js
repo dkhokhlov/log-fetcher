@@ -45,78 +45,111 @@ tap.test('logs_handler function', async (t) => {
 const path = require('path');
 const fs = require('fs');
 
-const totalLines = 1000;
+const totalLines = 10000;
 const testDirPath = path.resolve(__dirname, '..');
 const tapDirPath = path.join(testDirPath, '.tap');
 const testFilePath = path.join(tapDirPath, 'test_log_file.log');
 
 // Ensure the .tap directory exists
 tap.beforeEach(async () => {
-  await fs.promises.mkdir(tapDirPath, { recursive: true });
+    await fs.promises.mkdir(tapDirPath, {recursive: true});
 });
 
 // Test log file creation
 tap.test('Creating a test log file', async (t) => {
-  let testData = '';
-  for (let i = 0; i < totalLines; i++) {
-    testData += `Test log line ${i}\n`;
-  }
-  await fs.promises.writeFile(testFilePath, testData);
-  t.pass('Test log file created');
-  t.end();
+    let testData = '';
+    for (let i = 0; i < totalLines; i++) {
+        testData += `Test log line ${i}\n`;
+    }
+    await fs.promises.writeFile(testFilePath, testData);
+    t.pass('Test log file created');
+    t.end();
 });
 
 // Test for `num_lines` functionality
 tap.test('Testing num_lines parameter', async (t) => {
-  // Test retrieving a specific number of lines
-  let linesReceived = 0;
-  await logs_handler(
-    testFilePath,
-    'utf-8',
-    1024, // Assuming a chunk size of 1024 for the test
-    0,
-    null, // No keyword filtering for this test
-    async (line) => {
-      linesReceived++;
-      t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
-    }
-  );
-  t.equal(linesReceived, 0, 'Received the correct number of lines (0)');
+    // Test retrieving a specific number of lines
+    let linesReceived = 0;
+    let num_lines = 0;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        1024, // Assuming a chunk size of 1024 for the test
+        num_lines,
+        null, // No keyword filtering for this test
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+        }
+    );
+    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
 
-  linesReceived = 0;
-  await logs_handler(
-    testFilePath,
-    'utf-8',
-    1024, // Assuming a chunk size of 1024 for the test
-    10,
-    null, // No keyword filtering for this test
-    async (line) => {
-      linesReceived++;
-      t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
-    }
-  );
-  t.equal(linesReceived, 10, 'Received the correct number of lines (10)');
+    linesReceived = 0;
+    num_lines = 1;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        1024, // Assuming a chunk size of 1024 for the test
+        num_lines,
+        null, // No keyword filtering for this test
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+        }
+    );
+    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
 
-  linesReceived = 0;
-  await logs_handler(
-    testFilePath,
-    'utf-8',
-    2024, // Assuming a chunk size of 1024 for the test
-    100,
-    null, // No keyword filtering for this test
-    async (line) => {
-      linesReceived++;
-      t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
-    }
-  );
-  t.equal(linesReceived, 100,'Received the correct number of lines (100)');
+    linesReceived = 0;
+    num_lines = 10;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        10, // Assuming a chunk size of 1024 for the test
+        num_lines,
+        null, // No keyword filtering for this test
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+        }
+    );
+    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
 
-  t.end();
+    linesReceived = 0;
+    num_lines = 101;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        1024, // Assuming a chunk size of 1024 for the test
+        num_lines,
+        null, // No keyword filtering for this test
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+        }
+    );
+    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
+
+    linesReceived = 0;
+    num_lines = 1001;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        1024, // Assuming a chunk size of 1024 for the test
+        num_lines,
+        null, // No keyword filtering for this test
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), /Test log line \d+/, 'Line matches expected format');
+        }
+    );
+    t.equal(linesReceived, num_lines, `Received the correct number of lines (${num_lines})`);
+
+    t.end();
 });
 
 // Clean up the .tap directory and test files after all tests
 tap.teardown(async () => {
-  await fs.promises.rm(tapDirPath, { recursive: true, force: true });
+    await fs.promises.rm(tapDirPath, {recursive: true, force: true});
 });
 
 
@@ -125,43 +158,43 @@ const linesWithKeyword = 25; // Assuming we have 25 lines with the keyword
 
 // Ensure the .tap directory exists
 tap.beforeEach(async () => {
-  await fs.promises.mkdir(tapDirPath, { recursive: true });
+    await fs.promises.mkdir(tapDirPath, {recursive: true});
 });
 
 // Test log file creation with a keyword
 tap.test('Creating a test log file with keyword', async (t) => {
-  let testData = '';
-  for (let i = 0; i < totalLines; i++) {
-    if (i < linesWithKeyword) {
-      testData += `Test log line with ${keyword} ${i}\n`;
-    } else {
-      testData += `Test log line ${i}\n`;
+    let testData = '';
+    for (let i = 0; i < totalLines; i++) {
+        if (i < linesWithKeyword) {
+            testData += `Test log line with ${keyword} ${i}\n`;
+        } else {
+            testData += `Test log line ${i}\n`;
+        }
     }
-  }
-  await fs.promises.writeFile(testFilePath, testData);
-  t.pass('Test log file with keyword created');
-  t.end();
+    await fs.promises.writeFile(testFilePath, testData);
+    t.pass('Test log file with keyword created');
+    t.end();
 });
 
 // Test for `keyword` functionality
 tap.test('Testing keyword parameter', async (t) => {
-  let linesReceived = 0;
-  await logs_handler(
-    testFilePath,
-    'utf-8',
-    1024, // Assuming a chunk size of 1024 for the test
-    undefined, // No limit on the number of lines
-    keyword, // Filter lines containing the keyword
-    async (line) => {
-      linesReceived++;
-      t.match(line.toString('utf-8'), new RegExp(keyword), 'Line contains the keyword');
-    }
-  );
-  t.equal(linesReceived, linesWithKeyword, `Received the correct number of lines with the keyword (${linesWithKeyword})`);
-  t.end();
+    let linesReceived = 0;
+    await logs_handler(
+        testFilePath,
+        'utf-8',
+        1024, // Assuming a chunk size of 1024 for the test
+        undefined, // No limit on the number of lines
+        keyword, // Filter lines containing the keyword
+        async (line) => {
+            linesReceived++;
+            t.match(line.toString('utf-8'), new RegExp(keyword), 'Line contains the keyword');
+        }
+    );
+    t.equal(linesReceived, linesWithKeyword, `Received the correct number of lines with the keyword (${linesWithKeyword})`);
+    t.end();
 });
 
 // Clean up the .tap directory and test files after all tests
 tap.teardown(async () => {
-  await fs.promises.rm(tapDirPath, { recursive: true, force: true });
+    await fs.promises.rm(tapDirPath, {recursive: true, force: true});
 });

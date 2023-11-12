@@ -1,3 +1,4 @@
+'use strict'
 const fs = require('fs');
 
 /**
@@ -56,7 +57,7 @@ const NEWLINE = 10; // ASCII code for '\n'
  *   - array of complete lines (slices)
  */
 function backwardLineSegmentation(buffer, partial_right) {
-    const positions = []; // eol
+    const positions = []; // LF positions in buffer
     let pos = buffer.indexOf(NEWLINE);
     while (pos !== -1) {
         positions.push(pos);
@@ -64,25 +65,27 @@ function backwardLineSegmentation(buffer, partial_right) {
     }
     let left;
     if (positions.length === 0) {
-        left = Buffer.concat(buffer, partial_right);
+        left = Buffer.concat([buffer, partial_right]);
         return [left, []]; // incomplete line on the left side of the buffer, will be partial_right for next buffer
     }
     let lines = [];
-    let last_pos = positions.pop(); // last
-    if (last_pos === buffer.size - 1)
-        lines.push(partial_right); // right becomes complete line
+    let last_pos = positions.pop(); // end of last line in buffer
+    if (partial_right.length > 0) {
+        const line = Buffer.concat([buffer.slice(last_pos + 1), partial_right]); // partial_right becomes complete line
+        lines.push(line);
+    }
     if (positions.length === 0) {
-        left = buffer.slice(0, last_pos + 1);
-        return [left, []]; // incomplete line on the left side of the buffer, will be partial_right for next buffer
+        left = buffer.slice(0, last_pos + 1); // include LF
+        return [left, lines]; // incomplete line on the left side of the buffer, will be partial_right for next buffer
     }
     let line;
-    while (positions.length - 1 > 0) {
+    while (positions.length > 0) {
         pos = positions.pop(); // position on the right
         line = buffer.slice(pos + 1, last_pos + 1);
         lines.push(line); // needs to be reversed at the end
         last_pos = pos;
     }
-    left = buffer.slice(0, positions[0])
+    left = buffer.slice(0, last_pos + 1)
     return [left, lines.reverse()];  // lines order as in input buffer
 }
 

@@ -6,10 +6,8 @@ const {logger: root_logger} = require('./logger')
 const logger = root_logger.child({id: 'logs_handler'});
 
 /**
- * Retrieve log lines from given file and pass them to async lambda. Order of outputted log lines - latest log lines
- * first. If keyword is defined then only lines that have that keyword are returned. Lines are sent w/o decoding/encoding.
- * Note: the client is responsible for correct handling of premature end of chunk stream to detect error condition when
- * server side error happened after sending of lines started.
+ * Retrieve log lines from given file and pass them to async lambda. Order of outputted log lines - the latest log lines
+ * first. If keyword is defined then only lines that include keyword are returned. Lines are outputted in utf8 encoding.
  * Throws Exceptions on errors.
  *
  * @param {string} file_path - log file path
@@ -29,7 +27,7 @@ async function logs_handler(file_path, file_encoding, chunk_size,
     let position = file_stat.size;
     let line_count = 0;
     let lines;
-    const is_ascii_utf8 = ['ascii', 'utf8'].includes(file_encoding.toLowerCase());
+    const is_ascii_utf8 = ['ascii', 'utf8', 'utf-8'].includes(file_encoding.toLowerCase());
     try {
         const chunk_buffer = Buffer.alloc(chunk_size);
         let partial_line = Buffer.alloc(0);  // empty buffer w/o LF - meaning partial line on the right in next buffer will be ignored
@@ -43,15 +41,21 @@ async function logs_handler(file_path, file_encoding, chunk_size,
                 buffer = Buffer.from(utf16leString, 'utf8');
             }
             [partial_line, lines] = backwardLineSegmentation(buffer, partial_line);
-            for (const line in lines.reverse()) {
+            if (position === 0) // last buffer, partial_line becomes complete line
+                lines.unshift(partial_line);
+            lines.reverse(); // backwardLineSegmentation returns original line order in buffer
+            for (const line of lines) {
                 if (!keyword || line.toString(file_encoding).includes(keyword)) {
                     await async_output(line);
                     line_count++;
-                    if (num_lines !== undefined && line_count >= num_lines) {
+                    if (num_lines !== undefined && line_count >= num_lines)
                         break;
-                    }
                 }
             }
+            // clone partial_line slice into new Buffer
+            let partial_line_clone = Buffer.alloc(partial_line.length);
+            partial_line.copy(partial_line_clone);
+            partial_line = partial_line_clone;
         }
     } catch (error) {
         logger.error(`An error occurred while reading the file ${file_path}: ${error.message}`);

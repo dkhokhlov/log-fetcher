@@ -62,10 +62,9 @@ async function configureRoutes(fastify, version) {
         method: 'GET',
         url: '/logs-from-servers',
         schema: {
-            description: 'Retrieves log lines from given file on multiple servers. Order of outputted log lines: latest log lines listed first. ' +
-                'If keyword is defined then only matching lines are returned. Lines are sent using UTF-8 encoding. ' +
-                'Note: the client is responsible for correct handling of premature end-of-chunk-stream to detect ' +
-                'server side error condition after the sending of lines is started.',
+            description: 'Retrieves log lines from given file on multiple servers. Secondary servers full urls are listed ' +
+                'in "urls" query parameter. URLs have the same format as "/logs" endpoint. ' +
+                'Response payload format consist of of framed interleaved "/logs" endpoint chunks: "[url]\n[chunk]\0".',
             querystring: {
                 type: 'object',
                 properties: {
@@ -73,7 +72,7 @@ async function configureRoutes(fastify, version) {
                         type: 'array',
                         items: {type: 'string'},
                         minItems: 1,
-                        description: 'List of unique urls. each url follows the format of "/logs" endpoint'
+                        description: 'List of unique urls to secondary servers. each url follows the format of "/logs" endpoint'
                     },
                 },
                 required: ['urls']
@@ -94,9 +93,9 @@ async function logs_request_handler(request, reply) {
     const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
     try {
         reply.raw.writeHead(200, {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Transfer-Encoding': 'chunked',
             'Cache-Control': 'no-cache',
-            'Transfer-Encoding': 'chunked'
         });
         await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, async (chunk) => {
             let chunk_clone = Buffer.from(chunk);
@@ -118,9 +117,9 @@ async function logs_request_handler(request, reply) {
 }
 
 async function multi_server_logs_request_handler(request, reply) {
-    reply.type('text/plain; charset=utf-8');
+    reply.type('text/plain; charset=utf-8');  // just in case
     reply.raw.writeHead(200, {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache',
         'Transfer-Encoding': 'chunked'
     });

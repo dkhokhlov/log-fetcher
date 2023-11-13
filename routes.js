@@ -72,11 +72,8 @@ async function configureRoutes(fastify, version) {
                         type: 'array',
                         items: {type: 'string'},
                         minItems: 1,
-                        description: 'Name of the log file'
+                        description: 'List of unique urls. each url follows format of the "/logs" endpoint'
                     },
-                    filename: {type: 'string', description: 'Name of the log file'},
-                    lines: {type: 'integer', description: 'Number of last lines to retrieve (optional)'},
-                    keyword: {type: 'string', description: 'Keyword to filter log lines (optional)'},
                 },
                 required: ['urls', 'filename']
             }
@@ -88,16 +85,26 @@ async function configureRoutes(fastify, version) {
 async function logs_request_handler(request, reply) {
     reply.type('text/plain; charset=utf-8'); // just in case
     const log_dir = process.env.LF_LOG_DIR
-    const file_name = request.params.filename;
+    const file_name = request.query.filename;
     const file_path = path.join(log_dir, file_name);
     const file_encoding = process.env.LF_FILE_ENCODING
-    const num_lines = request.params.lines;
-    const keyword = request.params.keyword;
+    const num_lines = request.query.lines;
+    const keyword = request.query.keyword;
     const chunk_size = parseInt(process.env.LF_CHUNK_SIZE, 10);
     try {
-        return await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, (text) => {
-            reply.send(text)
+        reply.raw.writeHead(200, {
+            'Content-Type': 'text/plain',
+            'Transfer-Encoding': 'chunked'
         });
+        await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, async (chunk) => {
+            let should_retry = reply.raw.write(chunk);
+            while (!should_retry) {
+                // handle backpressure
+                await new Promise(resolve => reply.raw.once('drain', resolve));
+                should_retry = reply.raw.write(chunk); // retry writing the chunk
+            }
+        })
+        reply.raw.end(); // end the response
     } catch (err) {
         reply.log.error(err);
         if (reply.sent) {
@@ -111,17 +118,24 @@ async function logs_request_handler(request, reply) {
 const axios = require('axios');
 
 async function multi_server_logs_request_handler(request, reply) {
-    const {urls} = request.query;
     reply.type('text/plain; charset=utf-8');
+    reply.raw.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Transfer-Encoding': 'chunked'
+    });
+    let {urls} = request.query;
+    urls = Array.from(new Set(urls))
 
     const processUrl = async (url) => {
         try {
             const response = await axios.get(url, {responseType: 'stream'});
             response.data.on('data', async (chunk) => {
                 const framedChunk = `URL: ${url}\n${chunk}\0`;
-                if (!reply.raw.write(framedChunk)) {
-                    await new Promise((resolve) => reply.raw.once('drain', resolve));
-                    reply.raw.write(framedChunk);
+                let should_retry = reply.raw.write(framedChunk);
+                while (!should_retry) {
+                    // handle backpressure
+                    await new Promise(resolve => reply.raw.once('drain', resolve));
+                    should_retry = reply.raw.write(framedChunk); // retry writing the chunk
                 }
             });
         } catch (error) {

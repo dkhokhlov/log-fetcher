@@ -1,6 +1,7 @@
 'use strict'
 const {logs_handler} = require('./logs_handler')
 const path = require('path');
+const {assert} = require('./utils')
 
 /**
  * Configure fastify plugins and routes
@@ -72,7 +73,7 @@ async function configureRoutes(fastify, version) {
                         type: 'array',
                         items: {type: 'string'},
                         minItems: 1,
-                        description: 'List of unique urls. each url follows format of the "/logs" endpoint'
+                        description: 'List of unique urls. each url follows the format of "/logs" endpoint'
                     },
                 },
                 required: ['urls', 'filename']
@@ -97,11 +98,12 @@ async function logs_request_handler(request, reply) {
             'Transfer-Encoding': 'chunked'
         });
         await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, async (chunk) => {
-            let should_retry = reply.raw.write(chunk);
+            let chunk_clone = Buffer.from(chunk);
+            let should_retry = reply.raw.write(chunk_clone);
             while (!should_retry) {
                 // handle backpressure
                 await new Promise(resolve => reply.raw.once('drain', resolve));
-                should_retry = reply.raw.write(chunk); // retry writing the chunk
+                should_retry = reply.raw.write(chunk_clone); // retry writing the chunk
             }
         })
         reply.raw.end(); // end the response

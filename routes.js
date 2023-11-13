@@ -1,7 +1,7 @@
 'use strict'
-const {logs_handler} = require('./logs_handler')
 const path = require('path');
-const {assert} = require('./utils')
+const http = require('http');
+const {logs_handler} = require('./logs_handler')
 
 /**
  * Configure fastify plugins and routes
@@ -76,7 +76,7 @@ async function configureRoutes(fastify, version) {
                         description: 'List of unique urls. each url follows the format of "/logs" endpoint'
                     },
                 },
-                required: ['urls', 'filename']
+                required: ['urls']
             }
         },
         handler: multi_server_logs_request_handler
@@ -95,15 +95,15 @@ async function logs_request_handler(request, reply) {
     try {
         reply.raw.writeHead(200, {
             'Content-Type': 'text/plain',
+            'Cache-Control': 'no-cache',
             'Transfer-Encoding': 'chunked'
         });
         await logs_handler(file_path, file_encoding, chunk_size, num_lines, keyword, async (chunk) => {
             let chunk_clone = Buffer.from(chunk);
-            let should_retry = reply.raw.write(chunk_clone);
-            while (!should_retry) {
-                // handle backpressure
+            let done = reply.raw.write(chunk_clone);
+            while (!done) { // handle backpressure
                 await new Promise(resolve => reply.raw.once('drain', resolve));
-                should_retry = reply.raw.write(chunk_clone); // retry writing the chunk
+                done = reply.raw.write(chunk_clone); // retry writing the chunk
             }
         })
         reply.raw.end(); // end the response
@@ -117,32 +117,51 @@ async function logs_request_handler(request, reply) {
     }
 }
 
-const axios = require('axios');
-
 async function multi_server_logs_request_handler(request, reply) {
     reply.type('text/plain; charset=utf-8');
     reply.raw.writeHead(200, {
         'Content-Type': 'text/plain',
+        'Cache-Control': 'no-cache',
         'Transfer-Encoding': 'chunked'
     });
-    let {urls} = request.query;
-    urls = Array.from(new Set(urls))
 
-    const processUrl = async (url) => {
-        try {
-            const response = await axios.get(url, {responseType: 'stream'});
-            response.data.on('data', async (chunk) => {
-                const framedChunk = `URL: ${url}\n${chunk}\0`;
-                let should_retry = reply.raw.write(framedChunk);
-                while (!should_retry) {
-                    // handle backpressure
-                    await new Promise(resolve => reply.raw.once('drain', resolve));
-                    should_retry = reply.raw.write(framedChunk); // retry writing the chunk
-                }
-            });
-        } catch (error) {
-            reply.raw.write(`URL: ${url}\nError: ${error.message}\n\0`);
+    let {urls} = request.query;
+    if (!Array.isArray(urls)) {
+        urls = [urls];
+    }
+    urls = Array.from(new Set(urls));
+
+    async function write_chunk(chunk) {
+        let done = reply.raw.write(chunk);
+        while (!done) { // handle backpressure
+            await new Promise(resolve => reply.raw.once('drain', resolve));
+            done = reply.raw.write(chunk); // retry writing the chunk
         }
+    }
+
+    const processUrl = (url) => {
+        return new Promise((resolve, reject) => {
+            http.get(url, (response) => {
+                response.on('data', async (chunk) => {
+                    const framed_chunk = `${url}\n${chunk.toString()}\0`;
+                    await write_chunk(framed_chunk);
+                });
+                response.on('end', () => {
+                    resolve();
+                });
+                response.on('error', (err) => {
+                    let msg = `${url}\nError: ${err.message}\n\0`;
+                    reply.log.error(msg);
+                    write_chunk(msg);
+                    reject(err);
+                });
+            }).on('error', (err) => {
+                let msg = `${url}\nError: ${err.message}\n\0`;
+                reply.log.error(msg);
+                write_chunk(msg);
+                reject(err);
+            });
+        });
     };
 
     try {
@@ -151,7 +170,7 @@ async function multi_server_logs_request_handler(request, reply) {
         request.log.error(error);
         reply.code(500).send('An error occurred while processing the URLs');
     } finally {
-        reply.raw.end();
+        reply.raw.end(); // End the response stream
     }
 }
 

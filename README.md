@@ -68,7 +68,7 @@ npm install
 
 ### Configuration
 
-Configuration is controlled by environment variables that are stored in .env file in repo root whihc overrides env vars.
+Configuration is controlled by environment variables stored in **.env** file in repo root. Shell environment variables override **.env**.
 
 | name               | value in .env  file | description                                                                                      |
 |--------------------|---------------------|--------------------------------------------------------------------------------------------------|

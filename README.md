@@ -92,19 +92,19 @@ node server.js
 #### fetch whole log file
 
 ```angular2html
-curl http://127.0.0.1:5333/logs?filename=large_log_file.log > log
+curl "http://127.0.0.1:5333/logs?filename=large_log_file.log" > log
 ```
 
 #### fetch last 10 lines from log file
 
 ```angular2html
-curl http://127.0.0.1:5333/logs?lines=10&filename=large_log_file.log > log
+curl "http://127.0.0.1:5333/logs?filename=large_log_file.log&lines=10" > log
 ```
 
 #### fetch last 10 lines from log file that include keyword 'error'
 
 ```angular2html
-curl http://127.0.0.1:5333/logs?keyword=error&lines=10&filename=large_log_file.log > log
+curl "http://127.0.0.1:5333/logs?lines=10&filename=large_log_file.log&keyword=error" > log
 ```
 
 ## Tests

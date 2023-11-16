@@ -85,8 +85,15 @@ async function configureRoutes(fastify, version) {
 async function logs_request_handler(request, reply) {
     reply.type('text/plain; charset=utf-8'); // just in case
     const log_dir = process.env.LF_LOG_DIR
+    const log_dir_norm = path.resolve(log_dir);
     const file_name = request.query.filename;
-    const file_path = path.join(log_dir, file_name);
+    const file_path = path.join(log_dir_norm, file_name);
+    const file_path_norm = path.normalize(file_path);
+    if (!file_path_norm.startsWith(log_dir_norm))
+    {
+        reply.code(400).send('File path is outside of log directory');
+        return;
+    }
     const file_encoding = process.env.LF_FILE_ENCODING
     const num_lines = request.query.lines;
     const keyword = request.query.keyword;

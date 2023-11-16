@@ -44,7 +44,7 @@ individually log into each machine and access log files in specific directories.
 
 - **/logs-from-servers** endpoint
   - Sends REST requests listed in **urls** query parameter to secondary servers running **log-fetcher** and multiplex returned chunked responses in reply.
-  - reply chunks format:  <url>\n<chunk>\0
+  - reply chunks format:  **{url}\n{chunk}\0**
   - Urls listed in **urls* follow the same format as full url of **/logs** endpoint
   - core functionality is in function [multi_server_logs_request_handler](https://github.com/dkhokhlov/log-fetcher/blob/master/routes.js#L119)
 
